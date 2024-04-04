@@ -1,91 +1,79 @@
-// Function to save vote to local storage
-async function saveVoteToLocal(voteDetails) {
+// Function to save vote to API
+async function saveVoteToAPI(voteDetails) {
     try {
-        let votes = JSON.parse(localStorage.getItem("votes")) || [];
-        votes.push(voteDetails);
-        localStorage.setItem("votes", JSON.stringify(votes));
+        const response = await axios.post("https://crudcrud.com/api/f2e0f22f1b554f35b7bc1eb3b2650f28/vote", voteDetails);
+        return response.data; // Return the new vote details
     } catch (error) {
-        console.error("Error saving vote to local storage:", error);
+        console.error("Error saving vote to API:", error);
+        throw error; // Rethrow the error to handle it elsewhere if needed
     }
 }
 
-// Function to display vote on screen
-function displayVote(voteDetails) {
-    const monitor = voteDetails.monitor.toLowerCase();
-    const studentName = voteDetails.studentName;
+// Function to delete vote from API
+async function deleteVoteFromAPI(voteId) {
+    try {
+        await axios.delete(`https://crudcrud.com/api/f2e0f22f1b554f35b7bc1eb3b2650f28/vote/${voteId}`);
+    } catch (error) {
+        console.error("Error deleting vote from API:", error);
+        throw error;
+    }
+}
 
-    const voteList = document.getElementById(`${monitor}Votes`);
-    const listItem = document.createElement("li");
-    listItem.textContent = studentName;
+// Function to display vote on screen with delete button
+function displayVoteOnScreen(voteDetails) {
+    const monitor = voteDetails.monitor.toLowerCase();
+
+    const voteItem = document.createElement("li");
+    voteItem.textContent = voteDetails.studentName; 
+
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "Delete";
-    deleteButton.addEventListener("click", function() {
-        deleteVote(voteDetails._id, monitor); 
-        listItem.remove(); 
+    deleteButton.addEventListener("click", async function() {
+        try {
+            await deleteVoteFromAPI(voteDetails._id);
+            voteItem.remove(); 
+            updateVoteCounts(monitor, -1); 
+            await updateTotalVotesCount(); 
+        } catch (error) {
+            console.error("Error deleting vote:", error);
+        }
     });
-    listItem.appendChild(deleteButton);
-    voteList.appendChild(listItem);
+
+    voteItem.appendChild(deleteButton);
+
+    const voteList = document.getElementById(`${monitor}Votes`); // Get the vote list for the monitor
+    voteList.appendChild(voteItem);
+
+    // Update vote count
+    updateVoteCounts(monitor, 1);
 }
 
-// Function to delete vote from local storage
-async function deleteVote(voteId, monitor) {
-    try {
-        // Delete vote from API
-        const response = await axios.delete(`https://crudcrud.com/api/2c554a69d3af4c36b83ffcd793e80819/vote/${voteId}`);
-        console.log(response);
-        // Update UI
-        updateVoteCountsAfterDelete(monitor);
-    } catch (error) {
-        console.error("Error deleting vote:", error);
-    }
-
-    try {
-        // Delete vote from local storage
-        let votes = JSON.parse(localStorage.getItem("votes")) || [];
-        votes = votes.filter(vote => !(vote._id === voteId && vote.monitor === monitor));
-        localStorage.setItem("votes", JSON.stringify(votes));
-    } catch (error) {
-        console.error("Error deleting vote from local storage:", error);
-    }
-}
-
-// Function to update vote counts
-function updateVoteCounts(voteDetails) {
-    const monitor = voteDetails.monitor.toLowerCase();
+// Function to update vote counts for each monitor
+function updateVoteCounts(monitor, change) {
     const voteCountElement = document.getElementById(`${monitor}VoteCount`);
     if (voteCountElement) {
-        const currentCount = parseInt(voteCountElement.textContent);
-        voteCountElement.textContent = currentCount + 1;
-    }
-
-    // Update total vote count
-    const totalVotesElement = document.getElementById("votecount");
-    if (totalVotesElement) {
-        const currentTotal = parseInt(totalVotesElement.textContent);
-        totalVotesElement.textContent = currentTotal + 1;
+        let currentCount = parseInt(voteCountElement.textContent);
+        currentCount += change;
+        voteCountElement.textContent = currentCount;
     }
 }
 
-// Function to update vote counts after deletion
-function updateVoteCountsAfterDelete(monitor) {
-    // Update individual monitor vote counts after deletion
-    const voteCountElement = document.getElementById(`${monitor}VoteCount`);
-    if (voteCountElement) {
-        const currentCount = parseInt(voteCountElement.textContent);
-        voteCountElement.textContent = currentCount - 1;
-    }
-
-    // Update total vote count after deletion
-    const totalVotesElement = document.getElementById("votecount");
-    if (totalVotesElement) {
-        const currentTotal = parseInt(totalVotesElement.textContent);
-        totalVotesElement.textContent = currentTotal - 1;
+// Function to update total votes count
+async function updateTotalVotesCount() {
+    try {
+        const response = await axios.get("https://crudcrud.com/api/f2e0f22f1b554f35b7bc1eb3b2650f28/vote");
+        const totalVotes = response.data.length;
+        const totalVotesElement = document.getElementById("totalVotesCount");
+        totalVotesElement.textContent = totalVotes;
+    } catch (error) {
+        console.error("Error updating total votes count:", error);
     }
 }
 
 // Event listener for voting form submission
 document.getElementById("votingForm").addEventListener("submit", async function(event) {
-    event.preventDefault();
+    event.preventDefault(); 
+
     const studentName = document.getElementById("Student_name").value;
     const monitor = document.getElementById("monitor").value;
     
@@ -94,16 +82,13 @@ document.getElementById("votingForm").addEventListener("submit", async function(
         monitor: monitor
     };
     
-    // Save vote to local storage
-    await saveVoteToLocal(voteDetails);
-
     try {
-        // Post vote to API
-        const response = await axios.post("https://crudcrud.com/api/2c554a69d3af4c36b83ffcd793e80819/vote", voteDetails);
-        console.log(response);
+        // Save vote to API
+        const newVote = await saveVoteToAPI(voteDetails);
+
         // Update UI
-        updateVoteCounts(voteDetails);
-        displayVote(voteDetails);
+        displayVoteOnScreen(newVote);
+        await updateTotalVotesCount(); // Update total votes count
     } catch (error) {
         console.error("Error submitting vote:", error);
     }
@@ -116,13 +101,12 @@ document.getElementById("votingForm").addEventListener("submit", async function(
 // Load votes from API and update UI on page load
 window.addEventListener("DOMContentLoaded", async () => {
     try {
-        const response = await axios.get("https://crudcrud.com/api/2c554a69d3af4c36b83ffcd793e80819/vote");
-        console.log(response);
+        const response = await axios.get("https://crudcrud.com/api/f2e0f22f1b554f35b7bc1eb3b2650f28/vote");
         const votes = response.data || [];
         votes.forEach((voteDetails) => {
-            updateVoteCounts(voteDetails);
-            displayVote(voteDetails);
+            displayVoteOnScreen(voteDetails);
         });
+        await updateTotalVotesCount(); // Update total votes count on page load
     } catch (error) {
         console.error("Error fetching votes:", error);
     }

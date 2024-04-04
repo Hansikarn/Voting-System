@@ -7,7 +7,7 @@
 </head>
 <body>
     <h1 style="text-align: center;">Voting System</h1>
-    <p style="text-align: center;">Total Votes: <span id="votecount">0</span></p>
+    <p style="text-align: center;">Total Votes: <span id="totalVotesCount">0</span></p>
     
     <form id="votingForm">
         <div style="margin-bottom: 10px; margin-left: 10px;">
@@ -40,6 +40,11 @@
     <h2>Abhik</h2>
     <h4>Vote count: <span id="abhikVoteCount">0</span></h4>
     <ul id="abhikVotes"></ul>
+
+    
+    <ul id="votelist">
+        <!-- Vote items will be appended here -->
+    </ul>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.4/axios.min.js"></script>
     <script src="index.js"></script>
