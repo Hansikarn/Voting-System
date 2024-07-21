@@ -1,7 +1,7 @@
 // Function to save vote to API
 async function saveVoteToAPI(voteDetails) {
     try {
-        const response = await axios.post("https://crudcrud.com/api/ba76a642b1014539826c82ee5de94d15/vote", voteDetails);
+        const response = await axios.post("https://crudcrud.com/api/97670a0b483f4541835d5e3389912138/vote", voteDetails);
         return response.data; // Return the new vote details
     } catch (error) {
         console.error("Error saving vote to API:", error);
@@ -12,7 +12,7 @@ async function saveVoteToAPI(voteDetails) {
 // Function to delete vote from API
 async function deleteVoteFromAPI(voteId) {
     try {
-        await axios.delete(`https://crudcrud.com/api/ba76a642b1014539826c82ee5de94d15/vote/${voteId}`);
+        await axios.delete(`https://crudcrud.com/api/97670a0b483f4541835d5e3389912138/vote/${voteId}`);
     } catch (error) {
         console.error("Error deleting vote from API:", error);
         throw error;
@@ -61,7 +61,7 @@ function updateVoteCounts(monitor, change) {
 // Function to update total votes count
 async function updateTotalVotesCount() {
     try {
-        const response = await axios.get("https://crudcrud.com/api/ba76a642b1014539826c82ee5de94d15/vote");
+        const response = await axios.get("https://crudcrud.com/api/97670a0b483f4541835d5e3389912138/vote");
         const totalVotes = response.data.length;
         const totalVotesElement = document.getElementById("totalVotesCount");
         totalVotesElement.textContent = totalVotes;
@@ -101,7 +101,7 @@ document.getElementById("votingForm").addEventListener("submit", async function(
 // Load votes from API and update UI on page load
 window.addEventListener("DOMContentLoaded", async () => {
     try {
-        const response = await axios.get("https://crudcrud.com/api/ba76a642b1014539826c82ee5de94d15/vote");
+        const response = await axios.get("https://crudcrud.com/api/97670a0b483f4541835d5e3389912138/vote");
         const votes = response.data || [];
         votes.forEach((voteDetails) => {
             displayVoteOnScreen(voteDetails);
