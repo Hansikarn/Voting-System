@@ -93,6 +93,7 @@ button.delete:hover {
 
 #totalVotesCount {
     font-weight: bold;
+    text-align: center;
 }
 
 #votelist {
